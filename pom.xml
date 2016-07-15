@@ -6,7 +6,7 @@
 
     <groupId>uk.co.lucasweb</groupId>
     <artifactId>aws-v4-signer-java</artifactId>
-    <version>1.0</version>
+    <version>1.1-SNAPSHOT</version>
 
     <name>AWS V4 Signer for Java</name>
     <description>A lightweight, zero-dependency implementation of the AWS V4 signing algorithm</description>

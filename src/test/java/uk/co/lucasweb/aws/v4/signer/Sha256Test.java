@@ -13,6 +13,7 @@
 package uk.co.lucasweb.aws.v4.signer;
 
 import org.junit.Test;
+import uk.co.lucasweb.aws.v4.signer.hash.Sha256;
 
 import java.nio.charset.Charset;
 

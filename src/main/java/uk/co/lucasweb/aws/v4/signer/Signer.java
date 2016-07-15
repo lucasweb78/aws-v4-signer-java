@@ -14,10 +14,16 @@ package uk.co.lucasweb.aws.v4.signer;
 
 import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentials;
 import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentialsProviderChain;
+import uk.co.lucasweb.aws.v4.signer.functional.Throwables;
+import uk.co.lucasweb.aws.v4.signer.hash.Base16;
+import uk.co.lucasweb.aws.v4.signer.hash.Sha256;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -104,6 +110,7 @@ public class Signer {
 
         private AwsCredentials awsCredentials;
         private String region = DEFAULT_REGION;
+        private List<Header> headersList = new ArrayList<>();
 
         public Builder awsCredentials(AwsCredentials awsCredentials) {
             this.awsCredentials = awsCredentials;
@@ -115,21 +122,43 @@ public class Signer {
             return this;
         }
 
-        public Signer build(HttpRequest request, CanonicalHeaders headers, String service, String contentSha256) {
-            return new Signer(new CanonicalRequest(request, headers, contentSha256), getAwsCredentials(), service, region);
+        public Builder header(String name, String value) {
+            headersList.add(new Header(name, value));
+            return this;
         }
 
-        public Signer buildS3(HttpRequest request, CanonicalHeaders headers, String contentSha256) {
-            return build(request, headers, S3, contentSha256);
+        public Builder header(Header header) {
+            headersList.add(header);
+            return this;
         }
 
-        public Signer buildGlacier(HttpRequest request, CanonicalHeaders headers, String contentSha256) {
-            return build(request, headers, GLACIER, contentSha256);
+        public Builder headers(Header... headers) {
+            Arrays.stream(headers)
+                    .forEach(headersList::add);
+            return this;
+        }
+
+        public Signer build(HttpRequest request, String service, String contentSha256) {
+            return new Signer(new CanonicalRequest(request, getCanonicalHeaders(), contentSha256), getAwsCredentials(), service, region);
+        }
+
+        public Signer buildS3(HttpRequest request, String contentSha256) {
+            return build(request, S3, contentSha256);
+        }
+
+        public Signer buildGlacier(HttpRequest request, String contentSha256) {
+            return build(request, GLACIER, contentSha256);
         }
 
         private AwsCredentials getAwsCredentials() {
             return Optional.ofNullable(awsCredentials)
                     .orElse(new AwsCredentialsProviderChain().getCredentials());
+        }
+
+        private CanonicalHeaders getCanonicalHeaders() {
+            CanonicalHeaders.Builder builder = CanonicalHeaders.builder();
+            headersList.forEach(h -> builder.add(h.getName(), h.getValue()));
+            return builder.build();
         }
 
     }

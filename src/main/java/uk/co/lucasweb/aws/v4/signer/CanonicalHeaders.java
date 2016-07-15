@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  *
  * @author Richard Lucas
  */
-public class CanonicalHeaders {
+class CanonicalHeaders {
 
     private final String names;
     private final String canonicalizedHeaders;
@@ -38,28 +38,28 @@ public class CanonicalHeaders {
         this.internalMap = internalMap;
     }
 
-    public String get() {
+    String get() {
         return canonicalizedHeaders;
     }
 
-    public String getNames() {
+    String getNames() {
         return names;
     }
 
-    public Optional<String> getFirstValue(String name) {
+    Optional<String> getFirstValue(String name) {
         return Optional.ofNullable(internalMap.get(name.toLowerCase()))
                 .map(values -> values.get(0));
     }
 
-    public static Builder builder() {
+    static Builder builder() {
         return new Builder();
     }
 
-    public static class Builder {
+    static class Builder {
 
         private final TreeMap<String, List<String>> internalMap = new TreeMap<>();
 
-        public Builder add(String name, String value) {
+        Builder add(String name, String value) {
 
             if (name == null) {
                 throw new IllegalArgumentException("name is null");
@@ -78,7 +78,7 @@ public class CanonicalHeaders {
             return this;
         }
 
-        public CanonicalHeaders build() {
+        CanonicalHeaders build() {
             String names = internalMap.keySet()
                     .stream()
                     .map(String::toLowerCase)

@@ -32,15 +32,13 @@ public class SignerTest {
         // the values used in this test are from the example http://docs.aws.amazon.com/amazonglacier/latest/dev/amazon-glacier-signing-requests.html
         String hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
         HttpRequest request = new HttpRequest("PUT", new URI("https://glacier.us-east-1.amazonaws.com/-/vaults/examplevault"));
-        CanonicalHeaders headers = CanonicalHeaders.builder()
-                .add("Host", "glacier.us-east-1.amazonaws.com")
-                .add("x-amz-date", "20120525T002453Z")
-                .add("x-amz-glacier-version", "2012-06-01")
-                .build();
 
         String signature = Signer.builder()
                 .awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))
-                .buildGlacier(request, headers, hash)
+                .header("Host", "glacier.us-east-1.amazonaws.com")
+                .header("x-amz-date", "20120525T002453Z")
+                .header("x-amz-glacier-version", "2012-06-01")
+                .buildGlacier(request, hash)
                 .getSignature();
 
         String expectedSignature = "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20120525/us-east-1/glacier/aws4_request, " +
@@ -53,15 +51,13 @@ public class SignerTest {
     public void shouldSignRequestWithQueryParam() throws Exception {
         String hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
         HttpRequest request = new HttpRequest("GET", new URI("https://examplebucket.s3.amazonaws.com?max-keys=2&prefix=J"));
-        CanonicalHeaders headers = CanonicalHeaders.builder()
-                .add("Host", "examplebucket.s3.amazonaws.com")
-                .add("x-amz-date", "20130524T000000Z")
-                .add("x-amz-content-sha256", hash)
-                .build();
 
         String signature = Signer.builder()
                 .awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))
-                .buildS3(request, headers, hash)
+                .header("Host", "examplebucket.s3.amazonaws.com")
+                .header("x-amz-date", "20130524T000000Z")
+                .header("x-amz-content-sha256", hash)
+                .buildS3(request, hash)
                 .getSignature();
 
         String expectedSignature = "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request, " +
@@ -78,23 +74,21 @@ public class SignerTest {
         URI uri = new URI("https://glacier.us-east-1.amazonaws.com/-/vaults/dev2/multipart-uploads/j3eqysOZoNF3UiEoN3k_b6bdRGGdzgEfsLoUyZhMIwKRMuDLEYRw2nlCh8QXQ_dzqQMxrgFtmZjatxbFIZ9HpnIUi93B");
 
         HttpRequest request = new HttpRequest("PUT", uri);
-        CanonicalHeaders headers = CanonicalHeaders.builder()
-                .add("Accept", "application/json")
-                .add("Content-Length", "1049350")
-                .add("Content-Range", "bytes 0-1049349/*")
-                .add("Content-Type", "binary/octet-stream")
-                .add("Host", "glacier.us-east-1.amazonaws.com")
-                .add("user-agent", "aws-sdk-java/1.9.26 Mac_OS_X/10.10.3 Java_HotSpot(TM)_64-Bit_Server_VM/25.0-b70/1.8.0")
-                .add("x-amz-content-sha256", contentHash)
-                .add("X-Amz-Date", "20150424T222200Z")
-                .add("x-amz-glacier-version", "2012-06-01")
-                .add("x-amz-sha256-tree-hash", treeHash)
-                .add("X-Amz-Target", "Glacier.UploadMultipartPart")
-                .build();
 
         String signature = Signer.builder()
                 .awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))
-                .buildGlacier(request, headers, contentHash)
+                .header("Accept", "application/json")
+                .header("Content-Length", "1049350")
+                .header("Content-Range", "bytes 0-1049349/*")
+                .header("Content-Type", "binary/octet-stream")
+                .header("Host", "glacier.us-east-1.amazonaws.com")
+                .header("user-agent", "aws-sdk-java/1.9.26 Mac_OS_X/10.10.3 Java_HotSpot(TM)_64-Bit_Server_VM/25.0-b70/1.8.0")
+                .header("x-amz-content-sha256", contentHash)
+                .header("X-Amz-Date", "20150424T222200Z")
+                .header("x-amz-glacier-version", "2012-06-01")
+                .header("x-amz-sha256-tree-hash", treeHash)
+                .header("X-Amz-Target", "Glacier.UploadMultipartPart")
+                .buildGlacier(request, contentHash)
                 .getSignature();
 
         String expectedSignature = "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20150424/us-east-1/glacier/aws4_request, " +

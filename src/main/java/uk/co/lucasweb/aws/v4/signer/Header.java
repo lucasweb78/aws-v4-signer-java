@@ -10,17 +10,28 @@
 
   Copyright 2016 the original author or authors.
  */
-package uk.co.lucasweb.aws.v4.signer.credentials;
-
-import java.util.Optional;
+package uk.co.lucasweb.aws.v4.signer;
 
 /**
- * Functional Interface for providing AWS credentials.
+ * An HTTP Header.
  *
  * @author Richard Lucas
  */
-@FunctionalInterface
-public interface AwsCredentialsProvider {
+public class Header {
 
-    Optional<AwsCredentials> getCredentials();
+    private final String name;
+    private final String value;
+
+    public Header(String name, String value) {
+        this.name = name;
+        this.value = value;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getValue() {
+        return value;
+    }
 }

@@ -10,7 +10,7 @@
 
   Copyright 2016 the original author or authors.
  */
-package uk.co.lucasweb.aws.v4.signer;
+package uk.co.lucasweb.aws.v4.signer.functional;
 
 /**
  * Invokes a function wrapping any checked exceptions thrown by the function in an unchecked exception.

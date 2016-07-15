@@ -13,6 +13,7 @@
 package uk.co.lucasweb.aws.v4.signer;
 
 import org.junit.Test;
+import uk.co.lucasweb.aws.v4.signer.hash.Base16;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -10,7 +10,10 @@
 
   Copyright 2016 the original author or authors.
  */
-package uk.co.lucasweb.aws.v4.signer;
+package uk.co.lucasweb.aws.v4.signer.hash;
+
+import uk.co.lucasweb.aws.v4.signer.SigningException;
+import uk.co.lucasweb.aws.v4.signer.functional.Throwables;
 
 import java.nio.charset.Charset;
 import java.security.MessageDigest;

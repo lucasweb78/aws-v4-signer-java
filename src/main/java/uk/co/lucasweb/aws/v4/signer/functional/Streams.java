@@ -1,4 +1,4 @@
-package uk.co.lucasweb.aws.v4.signer;
+package uk.co.lucasweb.aws.v4.signer.functional;
 
 import java.util.Optional;
 import java.util.stream.Stream;

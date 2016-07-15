@@ -15,19 +15,19 @@ package uk.co.lucasweb.aws.v4.signer;
 /**
  * @author Richard Lucas
  */
-public class CanonicalRequest {
+class CanonicalRequest {
 
     private final HttpRequest httpRequest;
     private final CanonicalHeaders headers;
     private final String contentSha256;
 
-    public CanonicalRequest(HttpRequest httpRequest, CanonicalHeaders headers, String contentSha256) {
+    CanonicalRequest(HttpRequest httpRequest, CanonicalHeaders headers, String contentSha256) {
         this.httpRequest = httpRequest;
         this.headers = headers;
         this.contentSha256 = contentSha256;
     }
 
-    public String get() {
+    String get() {
         return httpRequest.getMethod() +
                 "\n" + httpRequest.getPath() +
                 "\n" + httpRequest.getQuery() +
@@ -36,7 +36,7 @@ public class CanonicalRequest {
                 "\n" + contentSha256;
     }
 
-    public CanonicalHeaders getHeaders() {
+    CanonicalHeaders getHeaders() {
         return headers;
     }
 

@@ -10,9 +10,11 @@
  *
  * Copyright 2016 the original author or authors.
  */
-package uk.co.lucasweb.aws.v4.signer;
+package uk.co.lucasweb.aws.v4.signer.credentials;
 
 /**
+ * Provides access to the AWS credentials used for accessing AWS services.
+ *
  * @author Richard Lucas
  */
 public class AwsCredentials {

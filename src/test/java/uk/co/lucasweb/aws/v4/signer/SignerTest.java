@@ -13,6 +13,7 @@
 package uk.co.lucasweb.aws.v4.signer;
 
 import org.junit.Test;
+import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentials;
 
 import java.net.URI;
 

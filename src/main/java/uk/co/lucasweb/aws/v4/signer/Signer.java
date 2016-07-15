@@ -12,9 +12,13 @@
  */
 package uk.co.lucasweb.aws.v4.signer;
 
+import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentials;
+import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentialsProviderChain;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.Charset;
+import java.util.Optional;
 
 /**
  * @author Richard Lucas
@@ -112,8 +116,7 @@ public class Signer {
         }
 
         public Signer build(HttpRequest request, CanonicalHeaders headers, String service, String contentSha256) {
-            // TODO get awsCredentials from system and environment properties if not set
-            return new Signer(new CanonicalRequest(request, headers, contentSha256), awsCredentials, service, region);
+            return new Signer(new CanonicalRequest(request, headers, contentSha256), getAwsCredentials(), service, region);
         }
 
         public Signer buildS3(HttpRequest request, CanonicalHeaders headers, String contentSha256) {
@@ -122,6 +125,11 @@ public class Signer {
 
         public Signer buildGlacier(HttpRequest request, CanonicalHeaders headers, String contentSha256) {
             return build(request, headers, GLACIER, contentSha256);
+        }
+
+        private AwsCredentials getAwsCredentials() {
+            return Optional.ofNullable(awsCredentials)
+                    .orElse(new AwsCredentialsProviderChain().getCredentials());
         }
 
     }

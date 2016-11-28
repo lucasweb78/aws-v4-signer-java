@@ -152,7 +152,7 @@ public class Signer {
 
         private AwsCredentials getAwsCredentials() {
             return Optional.ofNullable(awsCredentials)
-                    .orElse(new AwsCredentialsProviderChain().getCredentials());
+                    .orElseGet(() -> new AwsCredentialsProviderChain().getCredentials());
         }
 
         private CanonicalHeaders getCanonicalHeaders() {

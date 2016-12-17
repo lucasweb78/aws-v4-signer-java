@@ -12,7 +12,7 @@ Add the latest aws-v4-signer-java Maven dependency to your project
 <dependency>
   <groupId>uk.co.lucasweb</groupId>
   <artifactId>aws-v4-signer-java</artifactId>
-  <version>1.1</version>
+  <version>1.2</version>
 </dependency>
 ```
 
@@ -21,6 +21,7 @@ Add the latest aws-v4-signer-java Maven dependency to your project
 ### S3
 
 ```java
+public class Example {
 String contentSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 HttpRequest request = new HttpRequest("GET", new URI("https://examplebucket.s3.amazonaws.com?max-keys=2&prefix=J"));
 String signature = Signer.builder()
@@ -30,11 +31,13 @@ String signature = Signer.builder()
         .header("x-amz-content-sha256", contentSha256)
         .buildS3(request, contentSha256)
         .getSignature();
+}
 ```
 
 ### Glacier
 
 ```java
+public class Example {
 String contentSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 HttpRequest request = new HttpRequest("PUT", new URI("https://glacier.us-east-1.amazonaws.com/-/vaults/examplevault"));
 String signature = Signer.builder()
@@ -44,4 +47,5 @@ String signature = Signer.builder()
         .header("x-amz-glacier-version", "2012-06-01")
         .buildGlacier(request, contentSha256)
         .getSignature();
+}
 ```

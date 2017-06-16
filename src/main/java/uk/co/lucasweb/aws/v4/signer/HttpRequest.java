@@ -21,11 +21,25 @@ import java.util.Optional;
 public class HttpRequest {
 
     private final String method;
-    private final URI uri;
+    private final String path;
+    private final String query;
 
     public HttpRequest(String method, URI uri) {
         this.method = method;
-        this.uri = uri;
+        this.path = uri.getPath();
+        this.query = uri.getQuery();
+    }
+
+    public HttpRequest(String method, String pathAndQuery) {
+        this.method = method;
+        int queryStart = pathAndQuery.indexOf('?');
+        if (queryStart >= 0) {
+            this.path = pathAndQuery.substring(0, queryStart);
+            this.query = pathAndQuery.substring(queryStart + 1);
+        } else {
+            this.path = pathAndQuery;
+            this.query = null;
+        }
     }
 
     public String getMethod() {
@@ -33,15 +47,15 @@ public class HttpRequest {
     }
 
     public String getPath() {
-        if ("".equals(uri.getPath())) {
+        if ("".equals(path)) {
             return "/";
         }else {
-            return uri.getPath();
+            return path;
         }
     }
 
     public String getQuery() {
-        return Optional.ofNullable(uri.getQuery())
+        return Optional.ofNullable(query)
                 .orElse("");
     }
 }

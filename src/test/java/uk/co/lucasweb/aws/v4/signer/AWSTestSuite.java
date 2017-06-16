@@ -13,7 +13,6 @@
 package uk.co.lucasweb.aws.v4.signer;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -76,8 +75,7 @@ public class AWSTestSuite {
             builder.header(header);
         }
 
-        URI uri = URI.create(request.pathAndQuery);
-        HttpRequest httpRequest = new HttpRequest(request.method, uri);
+        HttpRequest httpRequest = new HttpRequest(request.method, request.pathAndQuery);
         this.signer = builder.build(httpRequest, SERVICE, request.contentHash);
     }
 

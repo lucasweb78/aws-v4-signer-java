@@ -89,7 +89,7 @@ class CanonicalHeaders {
                     .forEach(header -> header.getValue().forEach(value -> canonicalizedHeadersBuilder
                             .append(header.getKey().toLowerCase())
                             .append(':')
-                            .append(value)
+                            .append(normalizeHeaderValue(value))
                             .append('\n'))
                     );
 
@@ -100,6 +100,11 @@ class CanonicalHeaders {
             List<String> values = new ArrayList<>();
             values.add(value);
             return values;
+        }
+
+        private static String normalizeHeaderValue(String value) {
+            return value.trim() // Remove spaces on the edges of the string
+                    .replaceAll(" +", " "); // Remove duplicate spaces inside the string
         }
 
     }

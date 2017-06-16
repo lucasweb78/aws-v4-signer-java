@@ -13,11 +13,13 @@
 package uk.co.lucasweb.aws.v4.signer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Canonical Headers.
@@ -108,8 +110,19 @@ class CanonicalHeaders {
         }
 
         private static String normalizeHeaderValue(String value) {
-            return value.trim() // Remove spaces on the edges of the string
-                    .replaceAll(" +", " "); // Remove duplicate spaces inside the string
+            /*
+             * Strangely, the AWS test suite expects us to handle lines in
+             * multi-line values as individual values, even though this is not
+             * mentioned in the specs.
+             */
+            Stream<String> stream = Arrays.stream(value.split("\n"));
+
+            // Remove spaces on the edges of the string
+            stream = stream.map(String::trim);
+            // Remove duplicate spaces inside the string
+            stream = stream.map(s -> s.replaceAll(" +", " "));
+
+            return stream.collect(HEADER_VALUE_COLLECTOR);
         }
 
     }

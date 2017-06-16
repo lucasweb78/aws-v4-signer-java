@@ -41,6 +41,7 @@ public class URLEncoding {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
 
     private static final BitSet PATH_UNESCAPED_CHARACTERS;
+    private static final BitSet QUERY_COMPONENT_UNESCAPED_CHARACTERS;
     static {
         /*
          * See http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
@@ -64,6 +65,9 @@ public class URLEncoding {
         PATH_UNESCAPED_CHARACTERS = new BitSet();
         PATH_UNESCAPED_CHARACTERS.set('/');
         PATH_UNESCAPED_CHARACTERS.or(unreserved);
+
+        QUERY_COMPONENT_UNESCAPED_CHARACTERS = new BitSet();
+        QUERY_COMPONENT_UNESCAPED_CHARACTERS.or( unreserved );
     }
 
     private URLEncoding() {
@@ -77,6 +81,15 @@ public class URLEncoding {
      */
     public static String encodePath(String path) {
         return encode(path, PATH_UNESCAPED_CHARACTERS);
+    }
+
+    /**
+     * URL-encode the name or the value of a query parameter.
+     * @param string The string to encode
+     * @return An encoded version of the given string.
+     */
+    public static String encodeQueryComponent(String string) {
+        return encode(string, QUERY_COMPONENT_UNESCAPED_CHARACTERS);
     }
 
     /**

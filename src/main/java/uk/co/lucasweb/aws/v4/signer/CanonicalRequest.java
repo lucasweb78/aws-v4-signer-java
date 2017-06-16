@@ -99,7 +99,9 @@ class CanonicalRequest {
                 // No value => use an empty string as per the spec
                 value = "";
             }
-            builder.append(name).append(QUERY_PARAMETER_VALUE_SEPARATOR).append(value);
+            builder.append(URLEncoding.encodeQueryComponent(name))
+                    .append(QUERY_PARAMETER_VALUE_SEPARATOR)
+                    .append(URLEncoding.encodeQueryComponent(value));
         }
 
         return builder.toString();

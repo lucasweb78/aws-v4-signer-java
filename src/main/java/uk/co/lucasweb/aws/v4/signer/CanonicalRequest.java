@@ -25,14 +25,17 @@ import uk.co.lucasweb.aws.v4.signer.encoding.URLEncoding;
  */
 class CanonicalRequest {
 
+    private static final String S3_SERVICE = "s3";
     private static final char QUERY_PARAMETER_SEPARATOR = '&';
     private static final char QUERY_PARAMETER_VALUE_SEPARATOR = '=';
 
+    private final String service;
     private final HttpRequest httpRequest;
     private final CanonicalHeaders headers;
     private final String contentSha256;
 
-    CanonicalRequest(HttpRequest httpRequest, CanonicalHeaders headers, String contentSha256) {
+    CanonicalRequest(String service, HttpRequest httpRequest, CanonicalHeaders headers, String contentSha256) {
+        this.service = service;
         this.httpRequest = httpRequest;
         this.headers = headers;
         this.contentSha256 = contentSha256;
@@ -56,12 +59,19 @@ class CanonicalRequest {
         return get();
     }
 
-    private static String normalizePath(String path) {
+    private String normalizePath(String path) {
         if (path == null || path.isEmpty()) {
             return "/";
         }
         // Encode characters as mandated by AWS
         String encoded = URLEncoding.encodePath(path);
+        if (S3_SERVICE.equals(service)) {
+            /*
+             * S3 requests should not be normalized.
+             * See http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html#canonical-request
+             */
+            return encoded;
+        }
         // Normalize paths such as "/foo/..", "/./", "/foo//bar/", ...
         try {
             // Use "http://" as a prefix, so that paths such as "//" are deemed syntactically correct

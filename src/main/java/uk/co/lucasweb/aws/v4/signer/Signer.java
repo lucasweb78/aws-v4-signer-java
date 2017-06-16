@@ -142,7 +142,7 @@ public class Signer {
                     .orElseThrow(() -> new SigningException("headers missing '" + X_AMZ_DATE + "' header"));
             String dateWithoutTimestamp = formatDateWithoutTimestamp(date);
             AwsCredentials awsCredentials = getAwsCredentials();
-            CanonicalRequest canonicalRequest = new CanonicalRequest(request, canonicalHeaders, contentSha256);
+            CanonicalRequest canonicalRequest = new CanonicalRequest(service, request, canonicalHeaders, contentSha256);
             CredentialScope scope = new CredentialScope(dateWithoutTimestamp, service, region);
             return new Signer(canonicalRequest, awsCredentials, date, scope);
         }

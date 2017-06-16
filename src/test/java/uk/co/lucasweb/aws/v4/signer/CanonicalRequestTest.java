@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class CanonicalRequestTest {
 
-    private static final String EXPECTED = "PUT\n" +
+    private static final String EXPECTED_GLACIER = "PUT\n" +
             "/-/vaults/examplevault\n" +
             "\n" +
             "host:glacier.us-east-1.amazonaws.com\n" +
@@ -33,16 +33,37 @@ public class CanonicalRequestTest {
             "host;x-amz-date;x-amz-glacier-version\n" +
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
+    private static final String EXPECTED_S3 = "PUT\n" +
+            "/my-object//example//photo.user\n" +
+            "\n" +
+            "host:s3.us-east-1.amazonaws.com\n" +
+            "x-amz-date:20120525T002453Z\n" +
+            "\n" +
+            "host;x-amz-date\n" +
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
     @Test
-    public void shouldGetCanonicalRequest() throws Exception {
-        HttpRequest request = new HttpRequest("PUT", new URI("https://glacier.us-east-1.amazonaws.com/-/vaults/examplevault"));
+    public void shouldGetGlacierCanonicalRequest() throws Exception {
+        HttpRequest request = new HttpRequest("PUT", new URI("https://glacier.us-east-1.amazonaws.com/-/vaults///./examplevault"));
         CanonicalHeaders headers = CanonicalHeaders.builder()
                 .add("Host", "glacier.us-east-1.amazonaws.com")
                 .add("x-amz-date", "20120525T002453Z")
                 .add("x-amz-glacier-version", "2012-06-01")
                 .build();
         String hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-        assertThat(new CanonicalRequest(request, headers, hash).get())
-                .isEqualTo(EXPECTED);
+        assertThat(new CanonicalRequest("glacier", request, headers, hash).get())
+                .isEqualTo(EXPECTED_GLACIER);
+    }
+
+    @Test
+    public void shouldGetS3CanonicalRequest() throws Exception {
+        HttpRequest request = new HttpRequest("PUT", new URI("https://s3.us-east-1.amazonaws.com/my-object//example//photo.user"));
+        CanonicalHeaders headers = CanonicalHeaders.builder()
+                .add("Host", "s3.us-east-1.amazonaws.com")
+                .add("x-amz-date", "20120525T002453Z")
+                .build();
+        String hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+        assertThat(new CanonicalRequest("s3", request, headers, hash).get())
+                .isEqualTo(EXPECTED_S3);
     }
 }

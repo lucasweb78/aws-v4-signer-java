@@ -12,6 +12,8 @@
  */
 package uk.co.lucasweb.aws.v4.signer;
 
+import uk.co.lucasweb.aws.v4.signer.encoding.URLEncoding;
+
 /**
  * @author Richard Lucas
  */
@@ -29,7 +31,7 @@ class CanonicalRequest {
 
     String get() {
         return httpRequest.getMethod() +
-                "\n" + httpRequest.getPath() +
+                "\n" + URLEncoding.encodePath(httpRequest.getPath()) +
                 "\n" + httpRequest.getQuery() +
                 "\n" + headers.get() +
                 "\n" + headers.getNames() +

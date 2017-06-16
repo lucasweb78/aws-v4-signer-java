@@ -26,8 +26,8 @@ public class HttpRequest {
 
     public HttpRequest(String method, URI uri) {
         this.method = method;
-        this.path = uri.getPath();
-        this.query = uri.getQuery();
+        this.path = uri.getRawPath();
+        this.query = uri.getRawQuery();
     }
 
     public HttpRequest(String method, String pathAndQuery) {

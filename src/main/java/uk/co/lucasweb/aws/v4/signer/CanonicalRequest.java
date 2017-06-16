@@ -12,6 +12,9 @@
  */
 package uk.co.lucasweb.aws.v4.signer;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import uk.co.lucasweb.aws.v4.signer.encoding.URLEncoding;
 
 /**
@@ -31,7 +34,7 @@ class CanonicalRequest {
 
     String get() {
         return httpRequest.getMethod() +
-                "\n" + URLEncoding.encodePath(httpRequest.getPath()) +
+                "\n" + normalizePath(httpRequest.getPath()) +
                 "\n" + httpRequest.getQuery() +
                 "\n" + headers.get() +
                 "\n" + headers.getNames() +
@@ -45,5 +48,20 @@ class CanonicalRequest {
     @Override
     public String toString() {
         return get();
+    }
+
+    private static String normalizePath(String path) {
+        // Encode characters as mandated by AWS
+        String encoded = URLEncoding.encodePath(path);
+        // Normalize paths such as "/foo/..", "/./", "/foo//bar/", ...
+        try {
+            // Use "http://" as a prefix, so that paths such as "//" are deemed syntactically correct
+            return new URI("http://" + encoded).normalize().getRawPath();
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(
+                    "The encoded path '" + path + "' was deemed syntactically incorrect;"
+                    + " there is probably an internal issue with the encoding algorithm"
+            );
+        }
     }
 }

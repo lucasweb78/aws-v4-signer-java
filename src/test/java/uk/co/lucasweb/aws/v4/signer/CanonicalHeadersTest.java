@@ -31,7 +31,7 @@ public class CanonicalHeadersTest {
                 .build();
 
         assertThat(headers.getNames()).isEqualTo("hello;test");
-        assertThat(headers.get()).isEqualTo("hello:world\ntest:one\ntest:two\n");
+        assertThat(headers.get()).isEqualTo("hello:world\ntest:one,two\n");
     }
 
     @Test

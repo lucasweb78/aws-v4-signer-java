@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -27,6 +28,8 @@ import java.util.stream.Collectors;
  * @author Richard Lucas
  */
 class CanonicalHeaders {
+
+    private static final Collector<CharSequence, ?, String> HEADER_VALUE_COLLECTOR = Collectors.joining( "," );
 
     private final String names;
     private final String canonicalizedHeaders;
@@ -86,11 +89,13 @@ class CanonicalHeaders {
 
             StringBuilder canonicalizedHeadersBuilder = new StringBuilder();
             internalMap.entrySet()
-                    .forEach(header -> header.getValue().forEach(value -> canonicalizedHeadersBuilder
+                    .forEach(header -> canonicalizedHeadersBuilder
                             .append(header.getKey().toLowerCase())
                             .append(':')
-                            .append(normalizeHeaderValue(value))
-                            .append('\n'))
+                            .append(header.getValue().stream()
+                                    .map(Builder::normalizeHeaderValue).collect(HEADER_VALUE_COLLECTOR)
+                             )
+                            .append('\n')
                     );
 
             return new CanonicalHeaders(names, canonicalizedHeadersBuilder.toString(), internalMap);

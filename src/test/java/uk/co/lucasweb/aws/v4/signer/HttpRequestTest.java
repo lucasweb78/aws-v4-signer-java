@@ -34,10 +34,4 @@ public class HttpRequestTest {
         assertThat(new HttpRequest("GET", new URI("http://localhost/test?test=one&hello=world")).getQuery())
                 .isEqualTo("test=one&hello=world");
     }
-
-    @Test
-    public void shouldReturnEmptyStringIfNoQuery() throws Exception {
-        assertThat(new HttpRequest("GET", new URI("http://localhost/test")).getQuery())
-                .isEqualTo("");
-    }
 }

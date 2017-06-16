@@ -57,6 +57,9 @@ class CanonicalRequest {
     }
 
     private static String normalizePath(String path) {
+        if (path == null || path.isEmpty()) {
+            return "/";
+        }
         // Encode characters as mandated by AWS
         String encoded = URLEncoding.encodePath(path);
         // Normalize paths such as "/foo/..", "/./", "/foo//bar/", ...

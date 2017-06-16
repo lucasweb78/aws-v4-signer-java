@@ -13,7 +13,6 @@
 package uk.co.lucasweb.aws.v4.signer;
 
 import java.net.URI;
-import java.util.Optional;
 
 /**
  * @author Richard Lucas
@@ -47,15 +46,10 @@ public class HttpRequest {
     }
 
     public String getPath() {
-        if ("".equals(path)) {
-            return "/";
-        }else {
-            return path;
-        }
+        return path;
     }
 
     public String getQuery() {
-        return Optional.ofNullable(query)
-                .orElse("");
+        return query;
     }
 }

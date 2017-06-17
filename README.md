@@ -12,7 +12,7 @@ Add the latest aws-v4-signer-java Maven dependency to your project
 <dependency>
   <groupId>uk.co.lucasweb</groupId>
   <artifactId>aws-v4-signer-java</artifactId>
-  <version>1.2</version>
+  <version>1.3</version>
 </dependency>
 ```
 

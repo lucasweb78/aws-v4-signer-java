@@ -13,7 +13,6 @@
 package uk.co.lucasweb.aws.v4.signer;
 
 import java.net.URI;
-import java.util.Optional;
 
 /**
  * @author Richard Lucas
@@ -21,11 +20,25 @@ import java.util.Optional;
 public class HttpRequest {
 
     private final String method;
-    private final URI uri;
+    private final String path;
+    private final String query;
 
     public HttpRequest(String method, URI uri) {
         this.method = method;
-        this.uri = uri;
+        this.path = uri.getRawPath();
+        this.query = uri.getRawQuery();
+    }
+
+    public HttpRequest(String method, String pathAndQuery) {
+        this.method = method;
+        int queryStart = pathAndQuery.indexOf('?');
+        if (queryStart >= 0) {
+            this.path = pathAndQuery.substring(0, queryStart);
+            this.query = pathAndQuery.substring(queryStart + 1);
+        } else {
+            this.path = pathAndQuery;
+            this.query = null;
+        }
     }
 
     public String getMethod() {
@@ -33,15 +46,10 @@ public class HttpRequest {
     }
 
     public String getPath() {
-        if ("".equals(uri.getPath())) {
-            return "/";
-        }else {
-            return uri.getPath();
-        }
+        return path;
     }
 
     public String getQuery() {
-        return Optional.ofNullable(uri.getQuery())
-                .orElse("");
+        return query;
     }
 }

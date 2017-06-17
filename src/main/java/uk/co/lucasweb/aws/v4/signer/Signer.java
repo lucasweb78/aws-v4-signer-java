@@ -33,32 +33,34 @@ public class Signer {
 
     private static final String AUTH_TAG = "AWS4";
     private static final String ALGORITHM = AUTH_TAG + "-HMAC-SHA256";
-    private static final String TERMINATION_STRING = "aws4_request";
     private static final Charset UTF_8 = Throwables.returnableInstance(() -> Charset.forName("UTF-8"), SigningException::new);
     private static final String X_AMZ_DATE = "X-Amz-Date";
     private static final String HMAC_SHA256 = "HmacSHA256";
 
     private final CanonicalRequest request;
     private final AwsCredentials awsCredentials;
-    private final String service;
-    private final String region;
+    private final String date;
+    private final CredentialScope scope;
 
-    private Signer(CanonicalRequest request, AwsCredentials awsCredentials, String service, String region) {
+    private Signer(CanonicalRequest request, AwsCredentials awsCredentials, String date, CredentialScope scope) {
         this.request = request;
         this.awsCredentials = awsCredentials;
-        this.service = service;
-        this.region = region;
+        this.date = date;
+        this.scope = scope;
+    }
+
+    String getCanonicalRequest() {
+        return request.get();
+    }
+
+    String getStringToSign() {
+        String hashedCanonicalRequest = Sha256.get(getCanonicalRequest(), UTF_8);
+        return buildStringToSign(date, scope.get(), hashedCanonicalRequest);
     }
 
     public String getSignature() {
-        String date = request.getHeaders().getFirstValue(X_AMZ_DATE)
-                .orElseThrow(() -> new SigningException("headers missing '" + X_AMZ_DATE + "' header"));
-        String dateWithoutTimestamp = formatDateWithoutTimestamp(date);
-        String credentialScope = buildCredentialScope(dateWithoutTimestamp, service, region);
-        String hashedCanonicalRequest = Sha256.get(request.get(), UTF_8);
-        String stringToSign = buildStringToSign(date, credentialScope, hashedCanonicalRequest);
-        String signature = buildSignature(awsCredentials.getSecretKey(), dateWithoutTimestamp, stringToSign, service, region);
-        return buildAuthHeader(awsCredentials.getAccessKey(), credentialScope, request.getHeaders().getNames(), signature);
+        String signature = buildSignature(awsCredentials.getSecretKey(), scope, getStringToSign());
+        return buildAuthHeader(awsCredentials.getAccessKey(), scope.get(), request.getHeaders().getNames(), signature);
     }
 
     public static Builder builder() {
@@ -71,10 +73,6 @@ public class Signer {
 
     private static String buildStringToSign(String date, String credentialScope, String hashedCanonicalRequest) {
         return ALGORITHM + "\n" + date + "\n" + credentialScope + "\n" + hashedCanonicalRequest;
-    }
-
-    private static String buildCredentialScope(String dateWithoutTimeStamp, String service, String region) {
-        return dateWithoutTimeStamp + "/" + region + "/" + service + "/" + TERMINATION_STRING;
     }
 
     private static String buildAuthHeader(String accessKey, String credentialScope, String signedHeaders, String signature) {
@@ -93,12 +91,12 @@ public class Signer {
         }
     }
 
-    private static String buildSignature(String secretKey, String dateWithoutTimestamp, String stringToSign, String service, String region) {
+    private static String buildSignature(String secretKey, CredentialScope scope, String stringToSign) {
         byte[] kSecret = (AUTH_TAG + secretKey).getBytes(UTF_8);
-        byte[] kDate = hmacSha256(kSecret, dateWithoutTimestamp);
-        byte[] kRegion = hmacSha256(kDate, region);
-        byte[] kService = hmacSha256(kRegion, service);
-        byte[] kSigning = hmacSha256(kService, TERMINATION_STRING);
+        byte[] kDate = hmacSha256(kSecret, scope.getDateWithoutTimestamp());
+        byte[] kRegion = hmacSha256(kDate, scope.getRegion());
+        byte[] kService = hmacSha256(kRegion, scope.getService());
+        byte[] kSigning = hmacSha256(kService, CredentialScope.TERMINATION_STRING);
         return Base16.encode(hmacSha256(kSigning, stringToSign)).toLowerCase();
     }
 
@@ -139,7 +137,14 @@ public class Signer {
         }
 
         public Signer build(HttpRequest request, String service, String contentSha256) {
-            return new Signer(new CanonicalRequest(request, getCanonicalHeaders(), contentSha256), getAwsCredentials(), service, region);
+            CanonicalHeaders canonicalHeaders = getCanonicalHeaders();
+            String date = canonicalHeaders.getFirstValue(X_AMZ_DATE)
+                    .orElseThrow(() -> new SigningException("headers missing '" + X_AMZ_DATE + "' header"));
+            String dateWithoutTimestamp = formatDateWithoutTimestamp(date);
+            AwsCredentials awsCredentials = getAwsCredentials();
+            CanonicalRequest canonicalRequest = new CanonicalRequest(service, request, canonicalHeaders, contentSha256);
+            CredentialScope scope = new CredentialScope(dateWithoutTimestamp, service, region);
+            return new Signer(canonicalRequest, awsCredentials, date, scope);
         }
 
         public Signer buildS3(HttpRequest request, String contentSha256) {

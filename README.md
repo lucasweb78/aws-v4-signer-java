@@ -29,7 +29,7 @@ String signature = Signer.builder()
         .header("Host", "examplebucket.s3.amazonaws.com")
         .header("x-amz-date", "20130524T000000Z")
         .header("x-amz-content-sha256", contentSha256)
-        .buildS3(request, contentSha256)
+        .build(request, "s3", contentSha256)
         .getSignature();
 }
 ```
@@ -45,7 +45,22 @@ String signature = Signer.builder()
         .header("Host", "glacier.us-east-1.amazonaws.com")
         .header("x-amz-date", "20120525T002453Z")
         .header("x-amz-glacier-version", "2012-06-01")
-        .buildGlacier(request, contentSha256)
+        .build(request, "glacier", contentSha256)
+        .getSignature();
+}
+```
+
+### Mediaconvert
+
+```java
+public class Example {
+String contentSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+HttpRequest request = new HttpRequest("GET", new URI("<YOUR_ENDPOINT>"));
+String signature = Signer.builder()
+        .awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))
+        .header("Host", "<YOUR_HOST>")
+        .header("x-amz-date", "20120525T002453Z")
+        .build(request, "mediaconvert", contentSha256)
         .getSignature();
 }
 ```

@@ -103,8 +103,6 @@ public class Signer {
     public static class Builder {
 
         private static final String DEFAULT_REGION = "us-east-1";
-        private static final String S3 = "s3";
-        private static final String GLACIER = "glacier";
 
         private AwsCredentials awsCredentials;
         private String region = DEFAULT_REGION;
@@ -145,14 +143,6 @@ public class Signer {
             CanonicalRequest canonicalRequest = new CanonicalRequest(service, request, canonicalHeaders, contentSha256);
             CredentialScope scope = new CredentialScope(dateWithoutTimestamp, service, region);
             return new Signer(canonicalRequest, awsCredentials, date, scope);
-        }
-
-        public Signer buildS3(HttpRequest request, String contentSha256) {
-            return build(request, S3, contentSha256);
-        }
-
-        public Signer buildGlacier(HttpRequest request, String contentSha256) {
-            return build(request, GLACIER, contentSha256);
         }
 
         private AwsCredentials getAwsCredentials() {

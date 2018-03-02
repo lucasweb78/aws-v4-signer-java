@@ -38,7 +38,7 @@ public class SignerTest {
                 .header("Host", "glacier.us-east-1.amazonaws.com")
                 .header("x-amz-date", "20120525T002453Z")
                 .header("x-amz-glacier-version", "2012-06-01")
-                .buildGlacier(request, hash)
+                .build(request, "glacier", hash)
                 .getSignature();
 
         String expectedSignature = "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20120525/us-east-1/glacier/aws4_request, " +
@@ -57,7 +57,7 @@ public class SignerTest {
                 .header("Host", "examplebucket.s3.amazonaws.com")
                 .header("x-amz-date", "20130524T000000Z")
                 .header("x-amz-content-sha256", hash)
-                .buildS3(request, hash)
+                .build(request, "s3", hash)
                 .getSignature();
 
         String expectedSignature = "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request, " +
@@ -88,7 +88,7 @@ public class SignerTest {
                 .header("x-amz-glacier-version", "2012-06-01")
                 .header("x-amz-sha256-tree-hash", treeHash)
                 .header("X-Amz-Target", "Glacier.UploadMultipartPart")
-                .buildGlacier(request, contentHash)
+                .build(request, "glacier", contentHash)
                 .getSignature();
 
         String expectedSignature = "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20150424/us-east-1/glacier/aws4_request, " +

@@ -58,6 +58,7 @@ String contentSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b
 HttpRequest request = new HttpRequest("GET", new URI("<YOUR_ENDPOINT>"));
 String signature = Signer.builder()
         .awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))
+        .region("<YOUR_REGION>")
         .header("Host", "<YOUR_HOST>")
         .header("x-amz-date", "20120525T002453Z")
         .build(request, "mediaconvert", contentSha256)

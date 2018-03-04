@@ -146,11 +146,13 @@ public class Signer {
             CredentialScope scope = new CredentialScope(dateWithoutTimestamp, service, region);
             return new Signer(canonicalRequest, awsCredentials, date, scope);
         }
-
+        
+        @Deprecated
         public Signer buildS3(HttpRequest request, String contentSha256) {
             return build(request, S3, contentSha256);
         }
-
+        
+        @Deprecated
         public Signer buildGlacier(HttpRequest request, String contentSha256) {
             return build(request, GLACIER, contentSha256);
         }

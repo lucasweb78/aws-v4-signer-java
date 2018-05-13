@@ -21,15 +21,17 @@ import uk.co.lucasweb.aws.v4.signer.hash.Sha256;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author Richard Lucas
  */
 public class Signer {
+
+    public enum SignatureType {
+        AUTH_HEADER,
+        QUERY_STRING
+    }
 
     private static final String AUTH_TAG = "AWS4";
     private static final String ALGORITHM = AUTH_TAG + "-HMAC-SHA256";
@@ -37,12 +39,16 @@ public class Signer {
     private static final String X_AMZ_DATE = "X-Amz-Date";
     private static final String HMAC_SHA256 = "HmacSHA256";
 
+    private final SignatureType signatureType;
+    private final HttpRequest httpRequest;
     private final CanonicalRequest request;
     private final AwsCredentials awsCredentials;
     private final String date;
     private final CredentialScope scope;
 
-    private Signer(CanonicalRequest request, AwsCredentials awsCredentials, String date, CredentialScope scope) {
+    private Signer(SignatureType signatureType, HttpRequest httpRequest, CanonicalRequest request, AwsCredentials awsCredentials, String date, CredentialScope scope) {
+        this.signatureType = signatureType;
+        this.httpRequest = httpRequest;
         this.request = request;
         this.awsCredentials = awsCredentials;
         this.date = date;
@@ -59,8 +65,18 @@ public class Signer {
     }
 
     public String getSignature() {
+        return signatureType.equals(SignatureType.AUTH_HEADER) ?
+                getSignatureAuthHeader() : getSignatureQueryString();
+    }
+
+    private String getSignatureAuthHeader() {
         String signature = buildSignature(awsCredentials.getSecretKey(), scope, getStringToSign());
         return buildAuthHeader(awsCredentials.getAccessKey(), scope.get(), request.getHeaders().getNames(), signature);
+    }
+
+    private String getSignatureQueryString() {
+        String signature = buildSignature(awsCredentials.getSecretKey(), scope, getStringToSign());
+        return httpRequest.getQuery() + "&X-Amz-Signature=" + signature;
     }
 
     public static Builder builder() {
@@ -136,7 +152,25 @@ public class Signer {
             return this;
         }
 
-        public Signer build(HttpRequest request, String service, String contentSha256) {
+        public Signer buildQueryString(HttpRequest request, String service, String contentSha256, String date, int expiresSeconds) {
+            CanonicalHeaders canonicalHeaders = getCanonicalHeaders();
+            String dateWithoutTimestamp = formatDateWithoutTimestamp(date);
+            AwsCredentials awsCredentials = getAwsCredentials();
+            CredentialScope scope = new CredentialScope(dateWithoutTimestamp, service, region);
+            String rawQuery = request.getQuery();
+            StringBuilder queryStringBuilder = rawQuery == null ?
+                    new StringBuilder() : new StringBuilder(rawQuery).append("&");
+            queryStringBuilder.append("X-Amz-Algorithm=").append(ALGORITHM)
+                    .append("&X-Amz-Credential=").append(awsCredentials.getAccessKey()).append("/").append(scope.get())
+                    .append("&X-Amz-Date=").append(date)
+                    .append("&X-Amz-Expires=").append(expiresSeconds)
+                    .append("&X-Amz-SignedHeaders=").append(canonicalHeaders.getNames());
+            request = new HttpRequest(request.getMethod(), request.getPath() + "?" + queryStringBuilder.toString());
+            CanonicalRequest canonicalRequest = new CanonicalRequest(service, request, canonicalHeaders, contentSha256);
+            return new Signer(SignatureType.QUERY_STRING, request, canonicalRequest, awsCredentials, date, scope);
+        }
+
+        public Signer buildAuthHeader(HttpRequest request, String service, String contentSha256) {
             CanonicalHeaders canonicalHeaders = getCanonicalHeaders();
             String date = canonicalHeaders.getFirstValue(X_AMZ_DATE)
                     .orElseThrow(() -> new SigningException("headers missing '" + X_AMZ_DATE + "' header"));
@@ -144,13 +178,20 @@ public class Signer {
             AwsCredentials awsCredentials = getAwsCredentials();
             CanonicalRequest canonicalRequest = new CanonicalRequest(service, request, canonicalHeaders, contentSha256);
             CredentialScope scope = new CredentialScope(dateWithoutTimestamp, service, region);
-            return new Signer(canonicalRequest, awsCredentials, date, scope);
+            return new Signer(SignatureType.AUTH_HEADER, request, canonicalRequest, awsCredentials, date, scope);
         }
 
+        @Deprecated
+        public Signer build(HttpRequest request, String service, String contentSha256) {
+            return buildAuthHeader(request, service, contentSha256);
+        }
+
+        @Deprecated
         public Signer buildS3(HttpRequest request, String contentSha256) {
             return build(request, S3, contentSha256);
         }
 
+        @Deprecated
         public Signer buildGlacier(HttpRequest request, String contentSha256) {
             return build(request, GLACIER, contentSha256);
         }

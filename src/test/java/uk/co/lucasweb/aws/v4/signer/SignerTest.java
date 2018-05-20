@@ -16,6 +16,7 @@ import org.junit.Test;
 import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentials;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,6 +27,8 @@ public class SignerTest {
 
     private static final String ACCESS_KEY = "AKIAIOSFODNN7EXAMPLE";
     private static final String SECRET_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+
+
 
     @Test
     public void shouldSignRequest() throws Exception {
@@ -38,7 +41,7 @@ public class SignerTest {
                 .header("Host", "glacier.us-east-1.amazonaws.com")
                 .header("x-amz-date", "20120525T002453Z")
                 .header("x-amz-glacier-version", "2012-06-01")
-                .buildGlacier(request, hash)
+                .buildAuthHeader(request, "glacier", hash)
                 .getSignature();
 
         String expectedSignature = "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20120525/us-east-1/glacier/aws4_request, " +
@@ -57,7 +60,7 @@ public class SignerTest {
                 .header("Host", "examplebucket.s3.amazonaws.com")
                 .header("x-amz-date", "20130524T000000Z")
                 .header("x-amz-content-sha256", hash)
-                .buildS3(request, hash)
+                .buildAuthHeader(request, "s3", hash)
                 .getSignature();
 
         String expectedSignature = "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request, " +
@@ -88,12 +91,81 @@ public class SignerTest {
                 .header("x-amz-glacier-version", "2012-06-01")
                 .header("x-amz-sha256-tree-hash", treeHash)
                 .header("X-Amz-Target", "Glacier.UploadMultipartPart")
-                .buildGlacier(request, contentHash)
+                .buildAuthHeader(request,"glacier", contentHash)
                 .getSignature();
 
         String expectedSignature = "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20150424/us-east-1/glacier/aws4_request, " +
                 "SignedHeaders=accept;content-length;content-range;content-type;host;user-agent;x-amz-content-sha256;x-amz-date;x-amz-glacier-version;x-amz-sha256-tree-hash;x-amz-target, " +
                 "Signature=3ee337a197d3b15e719fd21acf378ef2d62f73159ff3c47fc0204e27e5ee9fb1";
+
+        assertThat(signature).isEqualTo(expectedSignature);
+    }
+
+    @Test
+    public void shouldSignS3AuthHeader() throws URISyntaxException {
+        // the values used in this test are from the example https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+        String contentSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+        HttpRequest request = new HttpRequest("GET", new URI("https://examplebucket.s3.amazonaws.com/test.txt"));
+        String signature = Signer.builder()
+                .awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))
+                .header("Host", "examplebucket.s3.amazonaws.com")
+                .header("range", "bytes=0-9")
+                .header("x-amz-date", "20130524T000000Z")
+                .header("x-amz-content-sha256", contentSha256)
+                .buildAuthHeader(request, "s3", contentSha256)
+                .getSignature();
+
+        String expectedSignature = "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request, " +
+                "SignedHeaders=host;range;x-amz-content-sha256;x-amz-date, Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41";
+
+        assertThat(signature).isEqualTo(expectedSignature);
+    }
+
+    @Test
+    public void shouldSignS3QueryString() throws Exception {
+        // the values used in this test are from the example https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html
+        HttpRequest request = new HttpRequest("GET", new URI("https://examplebucket.s3.amazonaws.com/test.txt"));
+        int expires = 86400;
+
+        String signature = Signer.builder()
+                .awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))
+                .header("Host", "examplebucket.s3.amazonaws.com")
+                .buildQueryString(request, "s3", "UNSIGNED-PAYLOAD", "20130524T000000Z", expires)
+                .getSignature();
+
+        String expectedSignature = "X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request&X-Amz-Date=20130524T000000Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=aeeed9bbccd4d02ee5c0109b86d86835f995330da4c265957d157751f604d404";
+
+        assertThat(signature).isEqualTo(expectedSignature);
+    }
+
+    @Test
+    public void shouldSignS3QueryStringWithSpaceInPath() throws Exception {
+        HttpRequest request = new HttpRequest("GET", new URI("https://examplebucket.s3.amazonaws.com/test%20space.txt"));
+        int expires = 86400;
+
+        String signature = Signer.builder()
+                .awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))
+                .header("Host", "examplebucket.s3.amazonaws.com")
+                .buildQueryString(request, "s3", "UNSIGNED-PAYLOAD", "20130524T000000Z", expires)
+                .getSignature();
+
+        String expectedSignature = "X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request&X-Amz-Date=20130524T000000Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=ef51f05604b7c6b178221e79b2515176adc928c4a84645d43f69c6bd94ed69ee";
+
+        assertThat(signature).isEqualTo(expectedSignature);
+    }
+
+    @Test
+    public void shouldSignS3QueryStringWithSpaceInParameter() throws Exception {
+        HttpRequest request = new HttpRequest("GET", new URI("https://examplebucket.s3.amazonaws.com/?prefix=test%20space"));
+        int expires = 86400;
+
+        String signature = Signer.builder()
+                .awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))
+                .header("Host", "examplebucket.s3.amazonaws.com")
+                .buildQueryString(request, "s3", "UNSIGNED-PAYLOAD", "20130524T000000Z", expires)
+                .getSignature();
+
+        String expectedSignature = "prefix=test%20space&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request&X-Amz-Date=20130524T000000Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=ae0e5b0a35ebeb2aed8192058878ca3c1e9720950d789b3367f85503aa8c1b4b";
 
         assertThat(signature).isEqualTo(expectedSignature);
     }

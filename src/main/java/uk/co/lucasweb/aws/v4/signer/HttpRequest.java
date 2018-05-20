@@ -13,31 +13,27 @@
 package uk.co.lucasweb.aws.v4.signer;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * @author Richard Lucas
  */
 public class HttpRequest {
 
+    private final URI uri;
     private final String method;
-    private final String path;
-    private final String query;
 
     public HttpRequest(String method, URI uri) {
         this.method = method;
-        this.path = uri.getRawPath();
-        this.query = uri.getRawQuery();
+        this.uri = uri;
     }
 
     public HttpRequest(String method, String pathAndQuery) {
         this.method = method;
-        int queryStart = pathAndQuery.indexOf('?');
-        if (queryStart >= 0) {
-            this.path = pathAndQuery.substring(0, queryStart);
-            this.query = pathAndQuery.substring(queryStart + 1);
-        } else {
-            this.path = pathAndQuery;
-            this.query = null;
+        try {
+            this.uri = new URI("https://hosttodiscard" + pathAndQuery);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -45,11 +41,19 @@ public class HttpRequest {
         return method;
     }
 
+    public String getRawPath() {
+        return uri.getRawPath();
+    }
+
     public String getPath() {
-        return path;
+        return uri.getPath();
+    }
+
+    public String getRawQuery() {
+        return uri.getRawQuery();
     }
 
     public String getQuery() {
-        return query;
+        return uri.getQuery();
     }
 }

@@ -33,6 +33,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentials;
+import uk.co.lucasweb.aws.v4.signer.encoding.URLEncoding;
 import uk.co.lucasweb.aws.v4.signer.hash.Sha256;
 
 /**
@@ -127,6 +128,17 @@ public class AWSTestSuite {
         // files...
         method = method.replaceAll("\\p{C}", "");
         String pathAndQuery = requestLineParts[1];
+        if (pathAndQuery.contains("?")) {
+            String path = URLEncoding.encodePath(pathAndQuery.substring(0, pathAndQuery.indexOf("?")));
+            String query = pathAndQuery.substring(pathAndQuery.indexOf("?") + 1);
+            String[] querySplit = query.split("=");
+            for (int i = 0; i < querySplit.length; i++) {
+                querySplit[i] = URLEncoding.encodeQueryComponent(querySplit[i]);
+            }
+            pathAndQuery = querySplit.length > 0 ? path + "?" + String.join("=", querySplit) : path;
+        } else {
+            pathAndQuery = URLEncoding.encodePath(pathAndQuery);
+        }
 
         List<Header> headers = parseHeaders(it);
 
@@ -175,7 +187,7 @@ public class AWSTestSuite {
 
     private static String[] splitOnFirst(String line, char separator) {
         int firstSeparator = line.indexOf(separator);
-        return new String[] { line.substring(0, firstSeparator), line.substring(firstSeparator + 1, line.length()) };
+        return new String[]{line.substring(0, firstSeparator), line.substring(firstSeparator + 1, line.length())};
     }
 
     private static String readString(Path path) throws IOException {
@@ -195,7 +207,7 @@ public class AWSTestSuite {
         private final String expectedSignature;
 
         private TestData(String name, TestAWSRequestToSign request,
-                String expectedCanonicalRequest, String expectedStringToSign, String expectedSignature) {
+                         String expectedCanonicalRequest, String expectedStringToSign, String expectedSignature) {
             this.name = name;
             this.request = request;
             this.expectedCanonicalRequest = expectedCanonicalRequest;

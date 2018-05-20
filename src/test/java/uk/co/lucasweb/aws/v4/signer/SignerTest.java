@@ -137,4 +137,36 @@ public class SignerTest {
 
         assertThat(signature).isEqualTo(expectedSignature);
     }
+
+    @Test
+    public void shouldSignS3QueryStringWithSpaceInPath() throws Exception {
+        HttpRequest request = new HttpRequest("GET", new URI("https://examplebucket.s3.amazonaws.com/test%20space.txt"));
+        int expires = 86400;
+
+        String signature = Signer.builder()
+                .awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))
+                .header("Host", "examplebucket.s3.amazonaws.com")
+                .buildQueryString(request, "s3", "UNSIGNED-PAYLOAD", "20130524T000000Z", expires)
+                .getSignature();
+
+        String expectedSignature = "X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request&X-Amz-Date=20130524T000000Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=ef51f05604b7c6b178221e79b2515176adc928c4a84645d43f69c6bd94ed69ee";
+
+        assertThat(signature).isEqualTo(expectedSignature);
+    }
+
+    @Test
+    public void shouldSignS3QueryStringWithSpaceInParameter() throws Exception {
+        HttpRequest request = new HttpRequest("GET", new URI("https://examplebucket.s3.amazonaws.com/?prefix=test%20space"));
+        int expires = 86400;
+
+        String signature = Signer.builder()
+                .awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))
+                .header("Host", "examplebucket.s3.amazonaws.com")
+                .buildQueryString(request, "s3", "UNSIGNED-PAYLOAD", "20130524T000000Z", expires)
+                .getSignature();
+
+        String expectedSignature = "prefix=test%20space&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request&X-Amz-Date=20130524T000000Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=ae0e5b0a35ebeb2aed8192058878ca3c1e9720950d789b3367f85503aa8c1b4b";
+
+        assertThat(signature).isEqualTo(expectedSignature);
+    }
 }

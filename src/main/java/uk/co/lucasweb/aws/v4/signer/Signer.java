@@ -14,12 +14,15 @@ package uk.co.lucasweb.aws.v4.signer;
 
 import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentials;
 import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentialsProviderChain;
+import uk.co.lucasweb.aws.v4.signer.encoding.URLEncoding;
 import uk.co.lucasweb.aws.v4.signer.functional.Throwables;
 import uk.co.lucasweb.aws.v4.signer.hash.Base16;
 import uk.co.lucasweb.aws.v4.signer.hash.Sha256;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -76,7 +79,7 @@ public class Signer {
 
     private String getSignatureQueryString() {
         String signature = buildSignature(awsCredentials.getSecretKey(), scope, getStringToSign());
-        return httpRequest.getQuery() + "&X-Amz-Signature=" + signature;
+        return httpRequest.getRawQuery() + "&X-Amz-Signature=" + signature;
     }
 
     public static Builder builder() {
@@ -157,15 +160,15 @@ public class Signer {
             String dateWithoutTimestamp = formatDateWithoutTimestamp(date);
             AwsCredentials awsCredentials = getAwsCredentials();
             CredentialScope scope = new CredentialScope(dateWithoutTimestamp, service, region);
-            String rawQuery = request.getQuery();
+            String rawQuery = request.getRawQuery();
             StringBuilder queryStringBuilder = rawQuery == null ?
                     new StringBuilder() : new StringBuilder(rawQuery).append("&");
             queryStringBuilder.append("X-Amz-Algorithm=").append(ALGORITHM)
-                    .append("&X-Amz-Credential=").append(awsCredentials.getAccessKey()).append("/").append(scope.get())
+                    .append("&X-Amz-Credential=").append(URLEncoding.encodeQueryComponent(awsCredentials.getAccessKey())).append("/").append(scope.get())
                     .append("&X-Amz-Date=").append(date)
                     .append("&X-Amz-Expires=").append(expiresSeconds)
                     .append("&X-Amz-SignedHeaders=").append(canonicalHeaders.getNames());
-            request = new HttpRequest(request.getMethod(), request.getPath() + "?" + queryStringBuilder.toString());
+            request = new HttpRequest(request.getMethod(), request.getRawPath() + "?" + queryStringBuilder.toString());
             CanonicalRequest canonicalRequest = new CanonicalRequest(service, request, canonicalHeaders, contentSha256);
             return new Signer(SignatureType.QUERY_STRING, request, canonicalRequest, awsCredentials, date, scope);
         }

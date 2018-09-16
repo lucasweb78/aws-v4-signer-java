@@ -12,12 +12,10 @@
  */
 package uk.co.lucasweb.aws.v4.signer;
 
+import java.nio.charset.Charset;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Test;
 import uk.co.lucasweb.aws.v4.signer.hash.Sha256;
-
-import java.nio.charset.Charset;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Richard Lucas
@@ -38,5 +36,11 @@ public class Sha256Test {
     public void shouldGetSha256() throws Exception {
         assertThat(Sha256.get(TEST, Charset.forName("UTF-8")))
                 .isEqualTo("5f1da1a2d0feb614dd03d71e87928b8e449ac87614479332aced3a701f916743");
+    }
+
+    @Test
+    public void shouldHashEmptyString() throws Exception {
+        assertThat(Sha256.get("", Charset.forName("UTF-8")))
+            .isEqualTo("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
     }
 }

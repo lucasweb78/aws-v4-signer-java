@@ -12,12 +12,13 @@
  */
 package uk.co.lucasweb.aws.v4.signer;
 
+import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import java.util.ArrayList;
 import java.util.List;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.co.lucasweb.aws.v4.signer.encoding.URLEncoding;
 
 /**
@@ -25,6 +26,7 @@ import uk.co.lucasweb.aws.v4.signer.encoding.URLEncoding;
  */
 class CanonicalRequest {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private static final String S3_SERVICE = "s3";
     private static final char QUERY_PARAMETER_SEPARATOR = '&';
     private static final char QUERY_PARAMETER_VALUE_SEPARATOR = '=';
@@ -42,12 +44,14 @@ class CanonicalRequest {
     }
 
     String get() {
-        return httpRequest.getMethod() +
+        String canonicalRequest = httpRequest.getMethod() +
                 "\n" + normalizePath(httpRequest.getPath()) +
                 "\n" + normalizeQuery(httpRequest.getQuery()) +
                 "\n" + headers.get() +
                 "\n" + headers.getNames() +
                 "\n" + contentSha256;
+        LOGGER.debug("CanonicalRequest string = \n'{}'", canonicalRequest);
+        return canonicalRequest;
     }
 
     CanonicalHeaders getHeaders() {

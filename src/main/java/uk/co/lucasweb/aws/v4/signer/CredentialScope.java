@@ -12,10 +12,15 @@
  */
 package uk.co.lucasweb.aws.v4.signer;
 
+import java.lang.invoke.MethodHandles;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @author Yoann Rodiere
  */
 class CredentialScope {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     static final String TERMINATION_STRING = "aws4_request";
 
     private final String dateWithoutTimestamp;
@@ -42,7 +47,9 @@ class CredentialScope {
     }
 
     String get() {
-        return dateWithoutTimestamp + "/" + region + "/" + service + "/" + TERMINATION_STRING;
+        String credentialScope = dateWithoutTimestamp + "/" + region + "/" + service + "/" + TERMINATION_STRING;
+        LOGGER.debug("CredentialScope = '{}'", credentialScope);
+        return credentialScope;
     }
 
 }

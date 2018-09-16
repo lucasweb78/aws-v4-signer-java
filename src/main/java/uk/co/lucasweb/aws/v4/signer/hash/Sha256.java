@@ -12,11 +12,10 @@
  */
 package uk.co.lucasweb.aws.v4.signer.hash;
 
-import uk.co.lucasweb.aws.v4.signer.SigningException;
-import uk.co.lucasweb.aws.v4.signer.functional.Throwables;
-
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
+import uk.co.lucasweb.aws.v4.signer.SigningException;
+import uk.co.lucasweb.aws.v4.signer.functional.Throwables;
 
 /**
  * @author Richard Lucas
@@ -24,8 +23,7 @@ import java.security.MessageDigest;
 public final class Sha256 {
 
     private static final String SHA_256 = "SHA-256";
-    private static final String ZERO = "0";
-    private static final char[] hexDigits = "0123456789abcdef".toCharArray();
+    private static final char[] HEX_DIGITS = "0123456789abcdef".toCharArray();
 
     private Sha256() {
         // hide default constructor
@@ -36,7 +34,7 @@ public final class Sha256 {
             MessageDigest md = MessageDigest.getInstance(SHA_256);
             byte[] bytes = value.getBytes(charset);
             md.update(bytes);
-            int b = md.getDigestLength();
+            int b = md.getDigestLength();   // Is this needed?  'b' isn't used, but is this a test-for-exception check?
             return bytesToHex(md.digest());
         }, SigningException::new);
     }
@@ -44,7 +42,7 @@ public final class Sha256 {
     private static String bytesToHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder(2 * bytes.length);
         for (byte b : bytes) {
-            sb.append(hexDigits[(b >> 4) & 0xf]).append(hexDigits[b & 0xf]);
+            sb.append(HEX_DIGITS[(b >> 4) & 0xf]).append(HEX_DIGITS[b & 0xf]);
         }
         return sb.toString();
     }

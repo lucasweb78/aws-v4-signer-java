@@ -12,25 +12,28 @@
  */
 package uk.co.lucasweb.aws.v4.signer;
 
+import java.lang.invoke.MethodHandles;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentials;
 import uk.co.lucasweb.aws.v4.signer.credentials.AwsCredentialsProviderChain;
 import uk.co.lucasweb.aws.v4.signer.functional.Throwables;
 import uk.co.lucasweb.aws.v4.signer.hash.Base16;
 import uk.co.lucasweb.aws.v4.signer.hash.Sha256;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
 /**
  * @author Richard Lucas
  */
 public class Signer {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private static final String AUTH_TAG = "AWS4";
     private static final String ALGORITHM = AUTH_TAG + "-HMAC-SHA256";
     private static final Charset UTF_8 = Throwables.returnableInstance(() -> Charset.forName("UTF-8"), SigningException::new);
@@ -54,13 +57,32 @@ public class Signer {
     }
 
     String getStringToSign() {
-        String hashedCanonicalRequest = Sha256.get(getCanonicalRequest(), UTF_8);
-        return buildStringToSign(date, scope.get(), hashedCanonicalRequest);
+        String canonicalRequest = getCanonicalRequest();
+        LOGGER.debug("Hashing canonicalRequest '{}' with SHA-256", canonicalRequest);
+
+        String hashedCanonicalRequest = Sha256.get(canonicalRequest, UTF_8);
+        LOGGER.debug("HashedCanonicalRequest = '{}'", hashedCanonicalRequest);
+
+        String stringToSign = buildStringToSign(date, scope.get(), hashedCanonicalRequest);
+        LOGGER.debug("StringToSign is = '{}'", stringToSign);
+
+        return stringToSign;
     }
 
+    /**
+     * @return A String suitable as the value in an AWS Signature V4 "Authorization: blah" header.  This isn't so much
+     * the "signature" per se, but rather the Authorization header
+     */
     public String getSignature() {
         String signature = buildSignature(awsCredentials.getSecretKey(), scope, getStringToSign());
-        return buildAuthHeader(awsCredentials.getAccessKey(), scope.get(), request.getHeaders().getNames(), signature);
+        LOGGER.debug("Signature is '{}'", signature);
+
+        String authHeader = buildAuthHeader(awsCredentials.getAccessKey(),
+                                            scope.get(),
+                                            request.getHeaders().getNames(),
+                                            signature);
+        LOGGER.debug("AuthHeader is '{}'", authHeader);
+        return authHeader;
     }
 
     public static Builder builder() {
@@ -105,6 +127,7 @@ public class Signer {
         private static final String DEFAULT_REGION = "us-east-1";
         private static final String S3 = "s3";
         private static final String GLACIER = "glacier";
+        private static final String API_GATEWAY = "execute-api";
 
         private AwsCredentials awsCredentials;
         private String region = DEFAULT_REGION;
@@ -141,10 +164,10 @@ public class Signer {
             String date = canonicalHeaders.getFirstValue(X_AMZ_DATE)
                     .orElseThrow(() -> new SigningException("headers missing '" + X_AMZ_DATE + "' header"));
             String dateWithoutTimestamp = formatDateWithoutTimestamp(date);
-            AwsCredentials awsCredentials = getAwsCredentials();
+            AwsCredentials credentials = getAwsCredentials();
             CanonicalRequest canonicalRequest = new CanonicalRequest(service, request, canonicalHeaders, contentSha256);
             CredentialScope scope = new CredentialScope(dateWithoutTimestamp, service, region);
-            return new Signer(canonicalRequest, awsCredentials, date, scope);
+            return new Signer(canonicalRequest, credentials, date, scope);
         }
 
         public Signer buildS3(HttpRequest request, String contentSha256) {
@@ -153,6 +176,10 @@ public class Signer {
 
         public Signer buildGlacier(HttpRequest request, String contentSha256) {
             return build(request, GLACIER, contentSha256);
+        }
+
+        public Signer buildAPIGateway(HttpRequest request, String contentSha256) {
+            return build(request, API_GATEWAY, contentSha256);
         }
 
         private AwsCredentials getAwsCredentials() {

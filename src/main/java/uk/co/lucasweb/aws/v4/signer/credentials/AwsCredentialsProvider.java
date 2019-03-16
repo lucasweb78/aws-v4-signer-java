@@ -12,7 +12,7 @@
  */
 package uk.co.lucasweb.aws.v4.signer.credentials;
 
-import java.util.Optional;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Functional Interface for providing AWS credentials.
@@ -22,5 +22,6 @@ import java.util.Optional;
 @FunctionalInterface
 public interface AwsCredentialsProvider {
 
-    Optional<AwsCredentials> getCredentials();
+    @Nullable
+    AwsCredentials getCredentials();
 }

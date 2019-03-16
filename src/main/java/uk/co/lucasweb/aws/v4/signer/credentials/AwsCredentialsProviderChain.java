@@ -12,12 +12,11 @@
  */
 package uk.co.lucasweb.aws.v4.signer.credentials;
 
+import org.jetbrains.annotations.Nullable;
 import uk.co.lucasweb.aws.v4.signer.SigningException;
-import uk.co.lucasweb.aws.v4.signer.functional.Streams;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @author Richard Lucas
@@ -45,30 +44,45 @@ public class AwsCredentialsProviderChain {
     }
 
     public AwsCredentials getCredentials() {
-        return providers.stream()
-                .flatMap(p -> Streams.streamopt(p.getCredentials()))
-                .findFirst()
-                .orElseThrow(() -> new SigningException("no AWS credentials were provided"));
+        for (AwsCredentialsProvider provider : providers) {
+            AwsCredentials credentials = provider.getCredentials();
+            if (credentials != null) {
+                return credentials;
+            }
+        }
+        throw new SigningException("no AWS credentials were provided");
     }
 
     AwsCredentialsProvider environmentProvider() {
-        return () -> getAwsCredentials(environmentVarResolver.getenv(ACCESS_KEY_ENV_VAR),
-                                       environmentVarResolver.getenv(SECRET_KEY_ENV_VAR));
+        return new AwsCredentialsProvider() {
+            @Nullable
+            @Override
+            public AwsCredentials getCredentials() {
+                String accessKey = environmentVarResolver.getenv(ACCESS_KEY_ENV_VAR);
+                String secretKey = environmentVarResolver.getenv(SECRET_KEY_ENV_VAR);
+                return getAwsCredentials2(accessKey, secretKey);
+            }
+        };
     }
 
     AwsCredentialsProvider systemPropertiesProvider() {
-        return () -> getAwsCredentials(System.getProperty(ACCESS_KEY_SYSTEM_PROPERTY),
-                                       System.getProperty(SECRET_KEY_SYSTEM_PROPERTY));
+        return new AwsCredentialsProvider() {
+            @Nullable
+            @Override
+            public AwsCredentials getCredentials() {
+                String accessKey = System.getProperty(ACCESS_KEY_SYSTEM_PROPERTY);
+                String secretKey = System.getProperty(SECRET_KEY_SYSTEM_PROPERTY);
+                return getAwsCredentials2(accessKey, secretKey);
+            }
+        };
     }
 
-    private Optional<AwsCredentials> getAwsCredentials(String accessKey, String secretKey) {
-
-        Optional<String> optionalAccessKey = Optional.ofNullable(accessKey);
-        Optional<String> optionalSecretKey = Optional.ofNullable(secretKey);
-        if (optionalAccessKey.isPresent() && optionalSecretKey.isPresent()) {
-            return Optional.of(new AwsCredentials(optionalAccessKey.get(), optionalSecretKey.get()));
+    @Nullable
+    private AwsCredentials getAwsCredentials2(@Nullable String accessKey, @Nullable String secretKey) {
+        if (accessKey != null && secretKey != null) {
+            return new AwsCredentials(accessKey, secretKey);
         } else {
-            return Optional.empty();
+            return null;
         }
     }
 

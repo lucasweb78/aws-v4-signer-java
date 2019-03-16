@@ -29,7 +29,7 @@ public final class Sha256 {
     public static String get(String value, Charset charset) {
         try {
             return new Buffer().write(value.getBytes(charset)).sha256().hex();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             throw new SigningException(e);
         }
     }

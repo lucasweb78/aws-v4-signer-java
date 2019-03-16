@@ -27,7 +27,7 @@ public final class Base16 {
     public static String encode(String data) {
         try {
             return ByteString.encodeUtf8(data).hex();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             throw new SigningException(e);
         }
     }
@@ -35,7 +35,7 @@ public final class Base16 {
     public static String encode(byte[] data) {
         try {
             return new ByteString(data).hex();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             throw new SigningException(e);
         }
     }

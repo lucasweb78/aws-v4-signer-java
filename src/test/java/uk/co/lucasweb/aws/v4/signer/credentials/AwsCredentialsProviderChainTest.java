@@ -47,8 +47,7 @@ public class AwsCredentialsProviderChainTest {
         System.setProperty(AwsCredentialsProviderChain.ACCESS_KEY_SYSTEM_PROPERTY, "access");
         System.setProperty(AwsCredentialsProviderChain.SECRET_KEY_SYSTEM_PROPERTY, "secret");
         assertThat(chain.systemPropertiesProvider().getCredentials())
-                .usingFieldByFieldValueComparator()
-                .hasValue(new AwsCredentials("access", "secret"));
+                .isEqualToComparingFieldByField(new AwsCredentials("access", "secret"));
     }
 
     @Test
@@ -62,8 +61,7 @@ public class AwsCredentialsProviderChainTest {
                 .getenv(eq(AwsCredentialsProviderChain.SECRET_KEY_ENV_VAR));
 
         assertThat(chain.environmentProvider().getCredentials())
-                .usingFieldByFieldValueComparator()
-                .hasValue(new AwsCredentials("env_access", "env_secret"));
+                .isEqualToComparingFieldByField(new AwsCredentials("env_access", "env_secret"));
     }
 
     @Test

@@ -16,6 +16,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import uk.co.lucasweb.aws.v4.signer.encoding.URLEncoding;
@@ -96,7 +97,12 @@ class CanonicalRequest {
          * code, which is equivalent to comparing code points (as mandated by
          * AWS)
          */
-        parameters.sort((l, r) -> l.name.compareTo(r.name));
+        parameters.sort(new Comparator<Parameter>() {
+            @Override
+            public int compare(Parameter l, Parameter r) {
+                return l.name.compareTo(r.name);
+            }
+        });
 
         StringBuilder builder = new StringBuilder();
         boolean first = true;

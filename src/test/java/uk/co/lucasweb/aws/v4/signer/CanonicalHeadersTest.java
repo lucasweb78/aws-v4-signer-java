@@ -58,8 +58,7 @@ public class CanonicalHeadersTest {
                 .add("hello", "world")
                 .build();
 
-        assertThat(headers.getFirstValue("test"))
-                .hasValue("one");
+        assertThat(headers.getFirstValue("test")).isEqualTo("one");
     }
 
     @Test
@@ -70,7 +69,6 @@ public class CanonicalHeadersTest {
                 .add("hello", "world")
                 .build();
 
-        assertThat(headers.getFirstValue("bad"))
-                .isEmpty();
+        assertThat(headers.getFirstValue("bad")).isNull();
     }
 }

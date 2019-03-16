@@ -12,10 +12,11 @@
  */
 package uk.co.lucasweb.aws.v4.signer;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -31,7 +32,7 @@ import java.util.stream.Stream;
  */
 class CanonicalHeaders {
 
-    private static final Collector<CharSequence, ?, String> HEADER_VALUE_COLLECTOR = Collectors.joining( "," );
+    private static final Collector<CharSequence, ?, String> HEADER_VALUE_COLLECTOR = Collectors.joining(",");
 
     private final String names;
     private final String canonicalizedHeaders;
@@ -51,9 +52,10 @@ class CanonicalHeaders {
         return names;
     }
 
-    Optional<String> getFirstValue(String name) {
-        return Optional.ofNullable(internalMap.get(name.toLowerCase()))
-                .map(values -> values.get(0));
+    @Nullable
+    String getFirstValue(String name) {
+        List<String> values = internalMap.get(name.toLowerCase());
+        return values == null ? null : values.get(0);
     }
 
     static Builder builder() {
@@ -73,14 +75,20 @@ class CanonicalHeaders {
             if (value == null) {
                 throw new IllegalArgumentException("value is null");
             }
-            String lowerCaseName = name.toLowerCase();
-            internalMap.put(lowerCaseName, Optional.ofNullable(internalMap.get(lowerCaseName))
-                    .map(values -> {
-                        values.add(value);
-                        return values;
-                    })
-                    .orElse(newValueListWithValue(value)));
+            String key = name.toLowerCase();
+            List<String> values = newValueListWithValue(value, key);
+            internalMap.put(key, values);
             return this;
+        }
+
+        private List<String> newValueListWithValue(String value, String lowerCaseName) {
+            List<String> values = internalMap.get(lowerCaseName);
+            if (values == null) {
+                return newValueListWithValue(value);
+            } else {
+                values.add(value);
+                return values;
+            }
         }
 
         CanonicalHeaders build() {
@@ -96,7 +104,7 @@ class CanonicalHeaders {
                             .append(':')
                             .append(header.getValue().stream()
                                     .map(Builder::normalizeHeaderValue).collect(HEADER_VALUE_COLLECTOR)
-                             )
+                            )
                             .append('\n')
                     );
 

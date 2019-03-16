@@ -145,13 +145,20 @@ public class Signer {
 
         public Signer build(HttpRequest request, String service, String contentSha256) {
             CanonicalHeaders canonicalHeaders = getCanonicalHeaders();
-            String date = canonicalHeaders.getFirstValue(X_AMZ_DATE)
-                    .orElseThrow(() -> new SigningException("headers missing '" + X_AMZ_DATE + "' header"));
+            String date = getDate(canonicalHeaders);
             String dateWithoutTimestamp = formatDateWithoutTimestamp(date);
             AwsCredentials awsCredentials = getAwsCredentials();
             CanonicalRequest canonicalRequest = new CanonicalRequest(service, request, canonicalHeaders, contentSha256);
             CredentialScope scope = new CredentialScope(dateWithoutTimestamp, service, region);
             return new Signer(canonicalRequest, awsCredentials, date, scope);
+        }
+
+        private String getDate(CanonicalHeaders canonicalHeaders) {
+            String value = canonicalHeaders.getFirstValue(X_AMZ_DATE);
+            if (value == null) {
+                throw new SigningException("headers missing '" + X_AMZ_DATE + "' header");
+            }
+            return value;
         }
 
         public Signer buildS3(HttpRequest request, String contentSha256) {

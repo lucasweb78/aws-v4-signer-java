@@ -21,9 +21,8 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @author Richard Lucas
@@ -138,8 +137,7 @@ public class Signer {
         }
 
         public Builder headers(Header... headers) {
-            Arrays.stream(headers)
-                    .forEach(headersList::add);
+            Collections.addAll(headersList, headers);
             return this;
         }
 
@@ -170,13 +168,14 @@ public class Signer {
         }
 
         private AwsCredentials getAwsCredentials() {
-            return Optional.ofNullable(awsCredentials)
-                    .orElseGet(() -> new AwsCredentialsProviderChain().getCredentials());
+            return awsCredentials == null ? new AwsCredentialsProviderChain().getCredentials() : awsCredentials;
         }
 
         private CanonicalHeaders getCanonicalHeaders() {
             CanonicalHeaders.Builder builder = CanonicalHeaders.builder();
-            headersList.forEach(h -> builder.add(h.getName(), h.getValue()));
+            for (Header header : headersList) {
+                builder.add(header.getName(), header.getValue());
+            }
             return builder.build();
         }
 

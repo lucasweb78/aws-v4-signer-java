@@ -1,19 +1,8 @@
-buildscript {
-    ext.kotlinVersion = '1.3.20'
-
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}"
-    }
-}
-
 repositories {
     mavenCentral()
 }
 
-apply plugin: 'kotlin'
+apply plugin: 'java'
 apply plugin: 'maven'
 
 group = 'uk.co.lucasweb'
@@ -25,7 +14,6 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}"
     implementation 'com.squareup.okio:okio:2.2.2'
 
     testCompile 'junit:junit:4.12'

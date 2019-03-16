@@ -14,13 +14,7 @@ package uk.co.lucasweb.aws.v4.signer;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
 
 /**
  * Canonical Headers.
@@ -31,8 +25,6 @@ import java.util.stream.Stream;
  * @author Richard Lucas
  */
 class CanonicalHeaders {
-
-    private static final Collector<CharSequence, ?, String> HEADER_VALUE_COLLECTOR = Collectors.joining(",");
 
     private final String names;
     private final String canonicalizedHeaders;
@@ -92,23 +84,40 @@ class CanonicalHeaders {
         }
 
         CanonicalHeaders build() {
-            String names = internalMap.keySet()
-                    .stream()
-                    .map(String::toLowerCase)
-                    .collect(Collectors.joining(";"));
+            String names = collect(internalMap.keySet());
 
             StringBuilder canonicalizedHeadersBuilder = new StringBuilder();
-            internalMap.entrySet()
-                    .forEach(header -> canonicalizedHeadersBuilder
-                            .append(header.getKey().toLowerCase())
-                            .append(':')
-                            .append(header.getValue().stream()
-                                    .map(Builder::normalizeHeaderValue).collect(HEADER_VALUE_COLLECTOR)
-                            )
-                            .append('\n')
-                    );
+            for (Map.Entry<String, List<String>> header : internalMap.entrySet()) {
+                canonicalizedHeadersBuilder
+                        .append(header.getKey().toLowerCase())
+                        .append(':')
+                        .append(collectNormalized(header.getValue()))
+                        .append('\n');
+            }
 
             return new CanonicalHeaders(names, canonicalizedHeadersBuilder.toString(), internalMap);
+        }
+
+        private String collect(Set<String> names) {
+            StringBuilder stringBuilder = new StringBuilder(names.size());
+            for (String key : names) {
+                if (stringBuilder.length() > 0) {
+                    stringBuilder.append(";");
+                }
+                stringBuilder.append(key.toLowerCase());
+            }
+            return stringBuilder.toString();
+        }
+
+        private String collectNormalized(List<String> values) {
+            StringBuilder stringBuilder = new StringBuilder(values.size());
+            for (String value : values) {
+                if (stringBuilder.length() > 0) {
+                    stringBuilder.append(",");
+                }
+                stringBuilder.append(normalizeHeaderValue(value));
+            }
+            return stringBuilder.toString();
         }
 
         private List<String> newValueListWithValue(String value) {
@@ -123,14 +132,20 @@ class CanonicalHeaders {
              * multi-line values as individual values, even though this is not
              * mentioned in the specs.
              */
-            Stream<String> stream = Arrays.stream(value.split("\n"));
+            String[] strings = value.split("\n");
+            StringBuilder stringBuilder = new StringBuilder(strings.length);
+            for (String string : strings) {
+                // Remove spaces on the edges of the string
+                String trimmed = string.trim();
 
-            // Remove spaces on the edges of the string
-            stream = stream.map(String::trim);
-            // Remove duplicate spaces inside the string
-            stream = stream.map(s -> s.replaceAll(" +", " "));
-
-            return stream.collect(HEADER_VALUE_COLLECTOR);
+                // Remove duplicate spaces inside the string
+                String sanitised = trimmed.replaceAll(" +", " ");
+                if (stringBuilder.length() > 0) {
+                    stringBuilder.append(",");
+                }
+                stringBuilder.append(sanitised);
+            }
+            return stringBuilder.toString();
         }
 
     }

@@ -26,6 +26,7 @@ targetCompatibility = 1.8
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}"
+    implementation 'com.squareup.okio:okio:2.2.2'
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.assertj:assertj-core:3.2.0'

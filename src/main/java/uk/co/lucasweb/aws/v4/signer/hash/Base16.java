@@ -12,40 +12,32 @@
  */
 package uk.co.lucasweb.aws.v4.signer.hash;
 
+import okio.ByteString;
 import uk.co.lucasweb.aws.v4.signer.SigningException;
-import uk.co.lucasweb.aws.v4.signer.functional.Throwables;
-
-import java.io.UnsupportedEncodingException;
 
 /**
  * @author Richard Lucas
  */
 public final class Base16 {
 
-    private static final char[] ENC_TAB = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-
     private Base16() {
         // hide default constructor
     }
 
     public static String encode(String data) {
-        return Throwables.returnableInstance(() -> encode(getBytes(data)), SigningException::new);
+        try {
+            return ByteString.encodeUtf8(data).hex();
+        } catch (RuntimeException e) {
+            throw new SigningException(e);
+        }
     }
 
     public static String encode(byte[] data) {
-        int length = data.length;
-        StringBuilder stringBuilder = new StringBuilder(length * 2);
-        int i = 0;
-        while (i < length) {
-            stringBuilder.append(ENC_TAB[(data[i] & 0xF0) >> 4]);
-            stringBuilder.append(ENC_TAB[data[i] & 0x0F]);
-            i++;
+        try {
+            return new ByteString(data).hex();
+        } catch (RuntimeException e) {
+            throw new SigningException(e);
         }
-
-        return stringBuilder.toString();
     }
 
-    private static byte[] getBytes(String data) throws UnsupportedEncodingException {
-        return data.getBytes("UTF-8");
-    }
 }

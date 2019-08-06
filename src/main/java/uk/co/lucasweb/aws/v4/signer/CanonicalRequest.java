@@ -132,6 +132,11 @@ class CanonicalRequest {
      */
     private static List<Parameter> extractQueryParameters(String rawQuery) {
         List<Parameter> results = new ArrayList<>();
+        // See the test "post-vanilla-query-space": any content after a space character should be ignored
+        int firstSpaceIndex = rawQuery.indexOf( ' ' );
+        if ( firstSpaceIndex >= 0 ) {
+            rawQuery = rawQuery.substring( 0, firstSpaceIndex );
+        }
         int endIndex = rawQuery.length() - 1;
         int index = 0;
         while (0 <= index && index <= endIndex) {

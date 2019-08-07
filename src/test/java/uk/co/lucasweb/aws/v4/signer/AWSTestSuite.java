@@ -63,10 +63,6 @@ public class AWSTestSuite {
         super();
         this.testData = testData;
 
-        Assume.assumeFalse(
-                "This test is probably buggy: it expects us to translate '/?p aram1=val ue1' to '/?p=' without any reason.",
-                "post-vanilla-query-space".equals(testData.name));
-
         TestAWSRequestToSign request = testData.request;
 
         Signer.Builder builder = Signer.builder().awsCredentials(new AwsCredentials(ACCESS_KEY, SECRET_KEY))

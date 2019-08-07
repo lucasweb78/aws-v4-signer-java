@@ -1,6 +1,6 @@
-POST
+GET
 /
-p=
+Param1=value1&Param1=value2
 host:example.amazonaws.com
 x-amz-date:20150830T123600Z
 

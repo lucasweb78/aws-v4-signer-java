@@ -16,6 +16,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import uk.co.lucasweb.aws.v4.signer.encoding.URLEncoding;
@@ -92,11 +93,10 @@ class CanonicalRequest {
         List<Parameter> parameters = extractQueryParameters(rawQuery);
 
         /*
-         * Sort query parameters. Simply sort lexicographically by character
-         * code, which is equivalent to comparing code points (as mandated by
-         * AWS)
+         * Sort query parameters.
+         * See Parameter.compare().
          */
-        parameters.sort((l, r) -> l.name.compareTo(r.name));
+        parameters.sort( null );
 
         StringBuilder builder = new StringBuilder();
         boolean first = true;
@@ -132,6 +132,11 @@ class CanonicalRequest {
      */
     private static List<Parameter> extractQueryParameters(String rawQuery) {
         List<Parameter> results = new ArrayList<>();
+        // See the test "post-vanilla-query-space": any content after a space character should be ignored
+        int firstSpaceIndex = rawQuery.indexOf( ' ' );
+        if ( firstSpaceIndex >= 0 ) {
+            rawQuery = rawQuery.substring( 0, firstSpaceIndex );
+        }
         int endIndex = rawQuery.length() - 1;
         int index = 0;
         while (0 <= index && index <= endIndex) {
@@ -168,7 +173,9 @@ class CanonicalRequest {
         return results;
     }
 
-    private static final class Parameter {
+    private static final class Parameter implements Comparable<Parameter> {
+        private static final Comparator<String> VALUE_COMPARATOR = Comparator.nullsFirst( Comparator.naturalOrder() );
+
         private final String name;
         private final String value;
 
@@ -176,6 +183,25 @@ class CanonicalRequest {
             super();
             this.name = name;
             this.value = value;
+        }
+
+        /**
+         * Compare the name first, and if equal, compare the value.
+         * <p>
+         * When comparing strings, compare lexicographical order using the character code,
+         * which is equivalent to comparing code points (as mandated by AWS).
+         *
+         * @param o The other value to be compared.
+         * @return The comparison result.
+         */
+        @Override
+        public int compareTo(Parameter o) {
+            int result = name.compareTo( o.name );
+            if ( result != 0 ) {
+                return result;
+            }
+            result = VALUE_COMPARATOR.compare( value, o.value );
+            return result;
         }
     }
 }

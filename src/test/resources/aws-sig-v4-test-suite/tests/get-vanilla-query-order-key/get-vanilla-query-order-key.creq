@@ -1,6 +1,6 @@
-POST
+GET
 /
-%40%23%24%25%5E%26%2B=%2F%2C%3F%3E%3C%60%22%3B%3A%5C%7C%5D%5B%7B%7D
+Param1=Value1&Param1=value2
 host:example.amazonaws.com
 x-amz-date:20150830T123600Z
 
